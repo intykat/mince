@@ -1,7 +1,8 @@
-{
-  "index": "Introduction",
+export default {
+  "index": "About",
+  "guide": "Guide",
+  "API": "API Reference",
   "another": "Another Page",
-  "advanced": "Advanced (A Folder)",
   "about": {
     "title": "About",
     "type": "page"
