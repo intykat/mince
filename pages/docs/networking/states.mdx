@@ -1,0 +1,123 @@
+import { Table, Td, Th, Tr } from 'nextra/components'
+import { FileTree } from 'nextra/components'
+import { Callout } from 'nextra/components'
+ 
+# States
+
+States provide a structured and efficient approach to managing data within a Roblox experience. They offer a centralized system for storing and synchronizing data across the server and clients, facilitating dynamic updates and reactive gameplay elements.
+
+Think of states as advanced versions of Roblox attributes. While attributes offer basic data storage and replication, states provide a more organized and feature-rich solution for complex data management.
+Attributes provide a basic framework for data persistence and replication, but states offer a more comprehensive solution for managing and synchronizing complex data structures within a Roblox experience. By leveraging states, developers can create more dynamic, responsive, and efficient games.
+
+
+<Table>
+  <thead>
+    <Tr>
+      <Th>Features</Th>
+      <Th>States</Th>
+      <Th>Attributes</Th>
+    </Tr>
+  </thead>
+  <tbody>
+  <Tr>
+      <Td>Data Storage</Td>
+      <Td>✅</Td>
+      <Td>✅</Td>
+    </Tr>
+    <Tr>
+      <Td>Synchronization</Td>
+      <Td>✅</Td>
+      <Td>✅</Td>
+    </Tr>
+    <Tr>
+      <Td>Complex Data Structures</Td>
+      <Td>✅</Td>
+      <Td>❌</Td>
+    </Tr>
+    <Tr>
+      <Td>Replicate to Select Clients</Td>
+      <Td>✅</Td>
+      <Td>❌</Td>
+    </Tr>
+    <Tr>
+      <Td>Optimized Network Traffic</Td>
+      <Td>✅</Td>
+      <Td>Limited</Td>
+    </Tr>
+  </tbody>
+</Table>
+
+## Getting Started
+Let's create a game round system using states.
+States must be created on the server before they can be used by clients.
+```luau filename="Server"
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Mince = require(ReplicatedStorage.Modules.Mince)
+
+local GameState = Mince:GetState("GameState") -- Create a server state named "GetState"
+```
+
+It may not seem like much has happened, but under the hood three instances have been created:
+
+![State Demonstration](/icons/StateDemo.png) 
+
+Now that our state exists, we can get this state on the client.
+```luau filename="Client"
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Mince = require(ReplicatedStorage.Modules.Mince)
+
+local GameState = Mince:GetState("GameState") -- Find and initiate a client state
+```
+
+<Callout type="info" emoji="ℹ️">
+  **Note:** States on the client and states on the server are fundamentally different classes with different apis. Keep this in mind when working with states.
+</Callout>
+
+## Data replication
+This is where things might stray from other state replication systems. Mince states are designed to be very comfortable when it comes to data management. In order to change state data on the server we simply index the state as if it were the data.
+```luau filename="Server"
+GameState.RoundInfo = {
+    Type = "Intermission",
+	LastsUntil = workspace:GetServerTimeNow() + 5
+}
+```
+
+Nice! Now let's access this data from the client:
+```luau filename="Client"
+print(GameState.RoundInfo)
+```
+
+```hmtl filename="Output"
+{
+    ["LastsUntil"] = 1731953982.843935,
+    ["Type"] = "Intermission"
+}
+```
+
+Yes it's really that simple! Now let's listen for changes, and create a little intermission countdown. This is done with the `Observe` method that client states have.
+
+```luau filename="Client"
+function NewRoundInfo(RoundInfo)
+	local RoundType = RoundInfo.Type
+	local LastsUntil = RoundInfo.LastsUntil
+	local CountdownTime = LastsUntil - game.Workspace:GetServerTimeNow()
+	
+	print(`New round is {RoundType}!`)
+	
+	for i = CountdownTime, 1, -1 do
+		print(math.round(i))
+		task.wait(1)
+	end
+end
+
+local RoundObserver = GameState:Observe("RoundInfo", NewRoundInfo)
+```
+
+```hmtl filename="Output"
+New round is Intermission!
+4
+3
+2
+1
+```
+
