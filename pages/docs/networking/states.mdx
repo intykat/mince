@@ -47,7 +47,7 @@ Attributes provide a basic framework for data persistence and replication, but s
   </tbody>
 </Table>
 
-## Getting Started
+## Getting started
 Let's create a game round system using states.
 States must be created on the server before they can be used by clients.
 ```luau filename="Server"
@@ -94,9 +94,14 @@ print(GameState.RoundInfo)
 }
 ```
 
-Yes it's really that simple! Now let's listen for changes, and create a little intermission countdown. This is done with the `Observe` method that client states have.
+Yes it's really that simple! Now let's listen for changes, and create a little intermission countdown. This is done with the `Observe` method that client states have. Here's our new client code.
 
-```luau filename="Client"
+```luau filename="Client" copy
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Mince = require(ReplicatedStorage.Modules.Mince)
+
+local GameState = Mince:GetState("GameState") -- Find and initiate a client state
+
 function NewRoundInfo(RoundInfo)
 	local RoundType = RoundInfo.Type
 	local LastsUntil = RoundInfo.LastsUntil
@@ -104,7 +109,7 @@ function NewRoundInfo(RoundInfo)
 	
 	print(`New round is {RoundType}!`)
 	
-	for i = CountdownTime, 1, -1 do
+	for i = CountdownTime, 0, -1 do
 		print(math.round(i))
 		task.wait(1)
 	end
@@ -121,3 +126,178 @@ New round is Intermission!
 1
 ```
 
+Nice! Now we can update it whenever we want on the server, here's our new server script
+
+```luau filename="Server" copy
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Mince = require(ReplicatedStorage.Modules.Mince)
+
+local GameState = Mince:GetState("GameState") -- Create a state named "GetState"
+
+function GameLoop()
+	while true do
+		wait(8)
+		GameState.RoundInfo = {
+			Type = "Intermission",
+			LastsUntil = game.Workspace:GetServerTimeNow() + 5
+		}
+		wait(5)
+		GameState.RoundInfo = {
+			Type = "Game",
+			LastsUntil = game.Workspace:GetServerTimeNow() + 8
+		}
+	end
+end
+
+task.defer(GameLoop)
+```
+
+```hmtl filename="Output"
+New round is Intermission!
+4
+3
+2
+1
+New round is Game!
+3
+2
+1
+...
+```
+
+## Tying data to instances
+You may be seeing an issue so far: Attributes are great because they are on an instance, individual models or players can have their own attributes. 
+We can't do that so easily with States though... or can we? `Mince:GetState()` supports instances as the index parameter so you can very easily attach states to instances. 
+Let's create a player data system using states.
+
+```luau filename="Server"
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+
+local Mince = require(ReplicatedStorage.Modules.Mince)
+
+function PlayerAdded(Player: Player)
+	local PlayerState = Mince:GetState(Player) -- Create a state for that player
+
+	PlayerState.Coins = 40 -- Set some dummy data
+	PlayerState.Health = 0
+end
+
+Players.PlayerAdded:Connect(PlayerAdded)
+```
+
+Yup, that's it. Now let's get that data on the client.
+
+```luau filename="Client"
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+
+local Mince = require(ReplicatedStorage.Modules.Mince)
+
+local MyState = Mince:GetState(Players.LocalPlayer) -- Get our new state which has already been created before this script has run
+
+print(MyState.Coins)
+```
+
+Presto! All of that data so easily right at our fingertips. It's like magic.
+
+## Disposing of states
+
+When a player holds onto a state and then leaves, we don't want that data anymore. Otherwise we would have a memory leak on our hands, and those can be quite nasty.
+Clients can Disconnect from states, but to truly destroy a state you have to call :Destroy() on the server.
+
+```luau filename="Server" {14-20}
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+
+local Mince = require(ReplicatedStorage.Modules.Mince)
+
+function PlayerAdded(Player: Player)
+	local PlayerState = Mince:GetState(Player) -- Create a state for that player
+    PlayerState:SetAudience({ Player }) -- Use SetAudience to set a list of players that data will replicate to
+
+	PlayerState.Coins = 40 -- Set some dummy data
+	PlayerState.Health = 0
+end
+
+function PlayerRemoving(Player: Player)
+	local PlayerState = Mince:GetState(Player)
+	
+	PlayerState:Destroy() -- Destroy the state
+end
+
+Players.PlayerRemoving:Connect(PlayerRemoving)
+Players.PlayerAdded:Connect(PlayerAdded)
+```
+
+## Setting audiences
+Let's say this data includes information that we want *only* some or one player(s) to have. 
+This can be for optimization reasons or maybe our game has secrets that we dont want exploiters to see.
+We can set an audience server-side on a state to prevent any data from being sent over to that client. Let's go back to our player data example and make the data exclusive.
+
+```luau filename="Server" {8}
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+
+local Mince = require(ReplicatedStorage.Modules.Mince)
+
+function PlayerAdded(Player: Player)
+	local PlayerState = Mince:GetState(Player) -- Create a state for that player
+    PlayerState:SetAudience({ Player }) -- Use SetAudience to set a list of players that data will replicate to
+
+	PlayerState.Coins = 40 -- Set some dummy data
+	PlayerState.Health = 0
+end
+
+function PlayerRemoving(Player: Player)
+	local PlayerState = Mince:GetState(Player)
+	
+	PlayerState:Destroy() -- Destroy the state
+end
+
+Players.PlayerRemoving:Connect(PlayerRemoving)
+Players.PlayerAdded:Connect(PlayerAdded)
+```
+
+Now that state is exclusive to only that player, and if another player tries to access it they will recieve an empty table followed by a warning on the server.
+
+## Observing subtables
+When observing a table more than one layer deep you can use a string with dot notation or an array with each index.
+
+Say we have a state with this data:
+```luau 
+{
+  ["MySubtable"] = {
+    "MySubSubTable" = {
+      "MySecretIndex" = "MySecretValue"
+    }
+  }
+}
+```
+
+we can observe the `MySecretIndex` index like so:
+```luau
+MyState:Observe("MySubtable.MySubSubTable.MySecretIndex", fn)
+-- OR 
+MyState:Observe({"MySubtable", "MySubSubTable", "MySecretIndex"}, fn)
+```
+
+The second option is useful if you have an index that has periods in it.
+<Callout type="info" emoji="ℹ️">
+  **Note:** `State:Observe()` has a third parameter `ListenToNested` that decides whether or not to update when data inside of the index updates. 
+  If you're watching `Table.Subtable` then when `Table.Subtable.SomeValue` is changed you'll recieve an update with the new data in `Table.Subtable`
+</Callout>
+
+## Forbidden indecies
+Since states use metamethods, you can't just set an index like `State.Observe` or `State.SetAudience` because this will override the methods and you won't be able to call them.
+Well that isn't true, you actually *can* override these indecies. How will you call the methods? Simple. Call the state. 
+States take full advantage of metatables so if you want to override `State.Observe` you can still call the method.
+
+```luau
+-- Instead of calling
+State:Observe(Index, fn)
+-- Do 
+State("Observe", Index, fn)
+```
+
+And there you have it! Now you can use states wherever you want.
