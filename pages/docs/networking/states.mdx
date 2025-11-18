@@ -35,7 +35,7 @@ Attributes provide a basic framework for data persistence and replication, but s
       <Td>❌</Td>
     </Tr>
     <Tr>
-      <Td>Replicate to Select Clients</Td>
+      <Td>Replicate to SelectClients </Td>
       <Td>✅</Td>
       <Td>❌</Td>
     </Tr>
@@ -54,7 +54,7 @@ States must be created on the server before they can be used by clients.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Mince = require(ReplicatedStorage.Modules.Mince)
 
-local GameState = Mince:GetState("GameState") -- Create a server state named "GetState"
+local GameState = Mince:GetState("GameState") -- Create a server state named "GameState"
 ```
 
 It may not seem like much has happened, but under the hood three instances have been created:
@@ -132,7 +132,7 @@ Nice! Now we can update it whenever we want on the server, here's our new server
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Mince = require(ReplicatedStorage.Modules.Mince)
 
-local GameState = Mince:GetState("GameState") -- Create a state named "GetState"
+local GameState = Mince:GetState("GameState") -- Create a state named "GameState"
 
 function GameLoop()
 	while true do
@@ -184,6 +184,10 @@ function PlayerAdded(Player: Player)
 end
 
 Players.PlayerAdded:Connect(PlayerAdded)
+
+for _, Player in game.Players:GetPlayers() do -- In case our client already exists
+	PlayerAdded(Player)
+end
 ```
 
 Yup, that's it. Now let's get that data on the client.
@@ -206,7 +210,7 @@ Presto! All of that data so easily right at our fingertips. It's like magic.
 When a player holds onto a state and then leaves, we don't want that data anymore. Otherwise we would have a memory leak on our hands, and those can be quite nasty.
 Clients can Disconnect from states, but to truly destroy a state you have to call :Destroy() on the server.
 
-```luau filename="Server" {14-20}
+```luau filename="Server" {13-19}
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 
@@ -214,7 +218,6 @@ local Mince = require(ReplicatedStorage.Modules.Mince)
 
 function PlayerAdded(Player: Player)
 	local PlayerState = Mince:GetState(Player) -- Create a state for that player
-    PlayerState:SetAudience({ Player }) -- Use SetAudience to set a list of players that data will replicate to
 
 	PlayerState.Coins = 40 -- Set some dummy data
 	PlayerState.Health = 0
@@ -228,6 +231,10 @@ end
 
 Players.PlayerRemoving:Connect(PlayerRemoving)
 Players.PlayerAdded:Connect(PlayerAdded)
+
+for _, Player in game.Players:GetPlayers() do -- In case our client already exists
+	PlayerAdded(Player)
+end
 ```
 
 ## Setting audiences
