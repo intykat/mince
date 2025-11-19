@@ -1,0 +1,85 @@
+---
+title: Autocomplete
+description: A detailed look at Chop's autocomplete features.
+---
+
+# Autocomplete
+
+Chop provides autocomplete features that are built to make the Mince development cycle faster. The autocomplete pays attention to the context you're in. It also has full access to the Roblox engine's types because it downloads them on startup, and it performs full-on type inferencing and type solving. Because of this, autocomplete is very powerful and allows it to integrate seamlessly as though Mince had native Roblox support.
+
+## Autocomplete Features
+
+Here are the key areas where Chop's autocomplete enhances the development experience, broken down by category.
+
+### Framework & Modules
+
+- **Module Names in `Mince:Get()`**
+  Chop provides a list of all valid modules you can request with `Mince:Get("...")`, preventing typos and saving you from having to remember exact module names.
+
+- **Module Content from `Mince:Get()`**
+  After retrieving a module, Chop provides full, context-aware autocomplete for all of its functions and properties, just as if it were a native Roblox module.
+
+- **Configuration with `Mince.Config`**
+  Autocompletes the keys and values defined in your Mince configuration file, allowing you to easily access project-wide settings.
+
+<br/>
+<video
+  src="/vid/autocompletemodules.mp4"
+  width="100%"
+  controls={false}
+  autoPlay
+  muted
+  loop
+/>
+
+### Components
+
+- **Component Tags**
+  When defining a new component, Chop suggests existing `CollectionService` tags from your project for the `Tag` field, helping you avoid misspellings.
+
+
+
+- **Component Instance Members**
+  Within a component's lifecycle methods, Chop provides a unified autocomplete that seamlessly blends the component's own methods, the members of its instance (which are inferred), and the attributes of the `Instance` it's attached to.
+
+<br/>
+<video
+  src="/vid/autocompletecomponents.mp4"
+  width="100%"
+  controls={false}
+  autoPlay
+  muted
+  loop
+/>
+
+### Type System & Directives
+
+- **Directive Suggestions**
+  When you type `---@` or `---/`, Chop provides contextual suggestions. For types (`---@`), it helps you find valid module and type paths. For commands (`---/`), it suggests commands like `ChopTrack`.
+
+
+- **Custom Type Imports**
+  After asserting a type with a directive like `---@MyModule.MyType`, Chop provides full autocomplete for that type's properties and methods, as if it were a native annotation. See [Comment Directives](./commentdirectives) for more info.
+
+
+- **Function Return Type Inference**
+  Chop automatically analyzes your functions to infer what they return. This means you get accurate autocomplete on the values returned from functions, often without needing to write any explicit type annotations yourself.
+
+<br/>
+<video
+  src="/vid/autocompletetypes.mp4"
+  width="100%"
+  controls={false}
+  autoPlay
+  muted
+  loop
+/>
+
+### Networking
+
+- **Event & Function Names**
+  When calling `Mince:GetEvent("...")` or `Mince:GetFunction("...")` on the client, Chop provides a list of all event and function names that have been defined on the server, ensuring your client-side code is always in sync.
+
+
+- **State Object Methods**
+  Provides full autocomplete for the rich API of State objects, including methods like `:Observe`, `:GetRaw`, `:Detach`, and all `:Array...` functions.

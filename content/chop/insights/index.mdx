@@ -1,0 +1,36 @@
+---
+title: About
+description: An overview of the Chop Insights dashboard.
+---
+
+import { Cards } from 'nextra/components'
+
+# Chop Insights
+
+Chop Insights is a powerful tool that allows you to monitor your framework's networking and identify key areas to optimize in terms of framework performance.
+
+It works by transparently inserting an addon into the Mince framework that wraps Mince-related functions with timers and monitors, collecting valuable performance data without requiring you to change your code.
+
+Insights automatically collects statistics while you are play-testing in Studio. Once you stop the play session, the dashboard will appear, presenting the data from that session for you to analyze.
+
+![insights in action](/screenshots/insights.png)
+
+The Insights dashboard focuses on three main areas:
+
+<Cards>
+  <Cards.Card
+    icon={<img src="/img/boot.png" alt="Chop Icon" width="32" height="32" />}
+    title="Boot Performance"
+    href="./insights/bootperformance"
+  />
+  <Cards.Card
+    icon={<img src="/img/networking.png" alt="Chop Icon" width="32" height="32" />}
+    title="Networking"
+    href="./insights/networking"
+  />
+  <Cards.Card
+    icon={<img src="/img/function.png" alt="Chop Icon" width="32" height="32" />}
+    title="Tracked Functions"
+    href="./insights/customtracking"
+  />
+</Cards>

@@ -1,0 +1,32 @@
+---
+title: Core
+description: API reference for the core Mince framework functions.
+---
+
+# Core Framework API
+
+These are the primary functions on the global `Mince` object for managing modules and the framework lifecycle. 
+
+---
+
+### `Mince:LoadModules(Instance)`
+Recursively searches for and loads all `ModuleScript`s within a given `Instance`, integrating them into the Mince framework.
+
+- **Arguments**:
+  - `Directory` (Instance): An instance (like a `Folder`) to search for modules.
+
+---
+
+### `Mince:Get(string)`
+Retrieves a loaded module by its name. This is the standard way to access other modules within the framework. It returns an empty table immediately, which is populated with the module's contents before the `:Setup()` phase.
+
+- **Arguments**:
+  - `ModuleName` (string): The name of the `ModuleScript` to retrieve.
+
+---
+
+### `Mince:WaitUntilSetup(string)`
+Yields the current thread until the Mince framework has completed its setup for the specified context. This is useful for scripts outside the Mince module system that need to interact with Mince APIs.
+
+- **Arguments**:
+  - `Context` (string): The context to wait for. Must be either `"Client"` or `"Server"`.

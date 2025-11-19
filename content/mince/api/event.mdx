@@ -1,0 +1,41 @@
+---
+title: Event
+description: API reference for Mince networking events.
+---
+
+# Event API
+
+Mince Events provide a declarative API for one-way, real-time communication between the client and server, built on top of `RemoteEvent` and `UnreliableRemoteEvent`. They are a removable addon.
+
+---
+
+### `Mince:GetEvent(NameOrInstance, [IsUnreliable])`
+Retrieves or creates a networking event. An event must be created on the server before it can be accessed by a client.
+
+- **Arguments**:
+  - `NameOrInstance` (string | Instance): The unique name of the event or a replicated `Instance` to attach it to.
+  - `IsUnreliable` (boolean, optional): If `true`, the event will use an `UnreliableRemoteEvent`. Defaults to `false`.
+
+---
+
+## Event Object API
+
+`Mince:GetEvent` returns an Event object with the following API:
+
+### `.Event`
+A `BindableEvent`-like object. Connect a function to this to listen for incoming data from the remote peer.
+- **Server Listener Signature**: `function(Player, ...)`
+- **Client Listener Signature**: `function(...)`
+
+### `:Fire(...)`
+Fires the event to the remote peer.
+- **On the Client**: Sends the event and arguments to the server.
+- **On the Server**: The first argument must be the destination `Player` object, followed by any other arguments.
+
+### `:FireAll(...)` (Server-only)
+Fires the event to all connected clients.
+
+### `:Extend(SubEventName)`
+Creates and returns a new, independent "sub-event" object that uses the same underlying `RemoteEvent`. This is useful for organizing related functionality without creating more remotes.
+- **Arguments**:
+  - `SubEventName` (string): The name of the sub-event.

@@ -1,0 +1,50 @@
+---
+title: Snippets
+description: Using code snippets to accelerate Mince development.
+---
+
+# Code Snippets
+
+Snippets provide a way for you to quickly adopt Mince coding patterns and accelerate your development. They are templates for common code structures that help ensure your code is consistent and boilerplate-free.
+
+## Using Snippets
+
+To use a snippet, simply type `Chop.` on a new line in the script editor. This will open a suggestion window with all the available Mince snippets.
+
+A key feature of snippets is that if you select one that requires the Mince framework, Chop will automatically add the `require` statement for Mince at the top of your script if it doesn't already exist.
+
+## Available Snippets
+
+### `Chop.Setup`
+This snippet creates the basic structure for a standard Mince module, including the `:Setup()` lifecycle method.
+
+**Result:**
+```lua
+-- Mince import...
+
+local Module = {}
+
+function Module:Setup()
+
+end
+
+return Module
+```
+
+### `Chop.Component`
+This snippet creates the boilerplate for a new Mince Component, including the `:Construct()` lifecycle method and a placeholder `Tag`.
+
+**Result:**
+```lua
+-- Mince import...
+
+local Component = Mince.Component {
+	Tag = "TagName"
+}
+
+function Component:Construct()
+	
+end
+
+return Component
+```

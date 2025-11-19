@@ -1,0 +1,18 @@
+---
+title: Module
+description: API reference for Mince module lifecycle methods.
+---
+
+# Module Lifecycle API
+
+These are optional methods that can be defined in your Mince-managed modules to hook into the framework's initialization sequence.
+
+---
+
+### `:Setup()`
+A method that, if defined on a module, is called after all modules have been loaded and are accessible via `Mince:Get()`. This is the primary method for all initialization logic, especially for code that depends on other modules.
+
+---
+
+### `:GameStart()`
+A method that, if defined on a module, is called after the `:Setup()` method has been successfully executed for **all** modules. This is useful for post-initialization logic that needs to run with the guarantee that every module in the framework has completed its setup phase.

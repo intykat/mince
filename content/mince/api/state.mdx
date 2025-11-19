@@ -1,0 +1,73 @@
+---
+title: State
+description: API reference for Mince networking states.
+---
+
+# State API
+
+Mince States are an advanced, table-like data structure for synchronizing complex data from the server to clients. They are a removable addon.
+
+---
+
+### `Mince:GetState(...)`
+Retrieves or creates a state object. A state must be created on the server before a client can access it.
+
+- **Server Signature**: `(NameOrInstance, [Group], [InitialData])`
+  - `NameOrInstance` (string | Instance): Unique identifier or instance to bind to.
+  - `Group` (string, optional): A group identifier for the state.
+  - `InitialData` (table, optional): The initial data for the state.
+
+- **Client Signature**: `(NameOrInstance, [Group])`
+
+---
+
+### `Mince:WaitForState(...)` (Client-only)
+Yields the current script until the specified state is available.
+
+- **Signature**: `(NameOrInstance, [Group])`
+
+---
+
+## State Object API
+
+### `:Observe(Key, Callback)`
+Watches for changes to a specific key within the state.
+- **Callback Signature**: `function(newValue, oldValue)`
+
+### `.Changed`
+A `BindableEvent`-like object that fires when any value in the state changes.
+- **Callback Signature**: `function(key, newValue, oldValue)`
+
+### `:GetRaw()`
+Returns a deep copy of the state's data as a raw Lua table.
+
+### Array Methods
+For manipulating array-like data within a state.
+- `:ArrayInsert(index, value)`
+- `:ArrayRemove(index)`
+- `:ArrayUnpack()`
+- `:ArrayMove(from, to, amount)`
+- `:ArrayMaxn()`
+- `:ArrayFind(value)`
+- `:ArrayConcat(otherTable)`
+- `:ArrayClear()`
+
+---
+
+## Root State API
+These methods are only available on the top-level state object returned by `GetState`, not on sub-tables.
+
+### `:Destroy()`
+Destroys the state. If called on the server, it is destroyed for all clients.
+
+### `:SetAudience({Player})` (Server-only)
+Restricts state replication to a specific list of players. Call with `nil` to replicate to all.
+
+### `:Detach()` (Client-only)
+Stops the client from receiving server updates. Local changes will still fire local events. Used for client-side prediction.
+
+### `:Reattach()` (Client-only)
+Resumes receiving updates from the server. Does not automatically sync the state upon reattachment.
+
+### `:ForceUpdate(Player, Key)` (Server-only)
+Forces a specific client to synchronize a specific key with the server's current value, even if the client is detached.

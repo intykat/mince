@@ -1,0 +1,26 @@
+---
+title: Features
+description: An overview of Chop's Intellisense features.
+---
+
+# Intellisense Features
+
+Chop's Intellisense smartly parses all of the code in your game to build a model of what's going on. It statically analyzes all of your code and determines where Mince loads from and what modules are associated with the framework. This deep understanding of your project structure allows it to fill in for parts of development where regular Roblox scripting tools can't.
+
+The Intellisense engine provides four main features:
+
+- **Autocomplete**: Provides smart, context-aware autocompletion for Mince APIs and your own modules, especially in areas that are lacking with a regular Roblox setup. See [Autocomplete](./intellisense/autocomplete) for more info.
+
+- **Linting**: Catches errors and potential bugs in your code before it runs. This includes Mince-specific rules to ensure you're using the framework correctly. See [Linting](./intellisense/linting) for more info.
+
+- **Snippets**: Helps you write code faster and adopt common Mince coding patterns with a collection of built-in snippets for creating modules and components. See [Snippets](./intellisense/snippets) for more info.
+
+- **Comment Directives**: Special comments that allow you to dynamically import types from Mince modules. They are also used to mark functions as trackable so their performance can be analyzed by the Insights dashboard. See [Comment Directives](./intellisense/commentdirectives) for more info.
+
+## Performance Considerations
+
+### Initial Load Time
+Due to the way Roblox Studio's environment is designed, it attempts to run any active linter on every script in your game simultaneously when a place is first opened. This can cause a small, one-time lag spike in Studio, particularly in very large projects. This is a known limitation of the Studio environment.
+
+### Memory Usage
+To provide its features, Chop's Intellisense needs to parse your project's code, extract data, and download the entire Roblox API dump. This process is memory-intensive and can sometimes use up to 1.5 GB of RAM. It is recommended to run Chop on a computer with at least 16 GB of total system memory to avoid performance issues.

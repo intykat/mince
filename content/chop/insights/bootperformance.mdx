@@ -1,0 +1,43 @@
+---
+title: Boot Performance
+description: Analyzing your framework's startup time with Chop Insights.
+---
+
+# Boot Performance
+
+The Boot Performance analysis of Chop Insights helps you diagnose and optimize the initial startup time of the Mince framework. It provides a detailed breakdown of how long each part of your framework takes to load.
+
+Insights collects statistics on three main areas during startup:
+- **Mince Modules**: `require()` time and `:Setup()` time.
+- **Configs**: `require()` time and memory usage.
+- **Components**: `:Construct()` time and instance count.
+
+## Interpreting Startup Times
+
+A good benchmark to aim for is a total startup time of **under 8 seconds** (a combined 4 seconds on the client and 4 seconds on the server). If your overall startup time is longer than this, it's worth investigating the cause using the Insights dashboard.
+
+A common and highly effective way to speed up loading is to defer non-essential work. If a module's `:Setup()` function needs to yield or perform a long-running task that isn't required for other modules to initialize, wrap its logic in `task.defer()` to move it out of the critical startup path.
+
+## Analyzing Boot Components
+
+### Modules
+Insights tracks two phases for modules:
+- **Require Time**: This should be as fast as possible. A module should ideally return its table of functions immediately, with minimal logic performed at the top level of the script.
+- **Setup Time**: This is where the bulk of a module's initialization logic should be. Insights will show you which modules have the longest setup times, making them primary candidates for optimization.
+
+### Configs
+- **Require Time**: Configs should load almost instantly, as they should primarily contain static data.
+- **Memory Usage**: Since config files are stored in memory, Insights will highlight the largest configs. This can help you identify if a config file has grown too large and should be refactored.
+
+### Components
+Insights tracks two key metrics for components at startup:
+- **Construct Time**: The total time spent running the `:Construct()` method for all instances of a component.
+- **Construct Count**: The number of instances of a component that were created during startup.
+
+While component construction can sometimes take time if dependencies need to be loaded, you should aim to keep the `:Construct()` method as lean as possible.
+
+## Interacting with the Dashboard
+
+To help you quickly find the source of a performance issue, you can **right-click** on modules and configs listed in the Boot Performance view. This will open a context menu:
+
+![insights in action](/screenshots/insightscontextmenu.png)

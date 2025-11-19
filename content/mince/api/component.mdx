@@ -1,0 +1,50 @@
+---
+title: Component
+description: API reference for Mince components.
+---
+
+# Component API
+
+This document details the API for creating and managing Mince Components. They are a removable addon.
+
+---
+
+### `Mince.Component(Table)`
+Defines a new component type. This function returns a singleton object that is used to manage all component objects of this type.
+
+- **Options Table**:
+  - `Tag` (string, required): The `CollectionService` tag that this component is associated with.
+  - `CreationParents` (array, optional): A list of `Instance`s where the framework will look for tagged objects. If not provided, it will search the entire game.
+
+---
+
+## Component Lifecycle Methods
+
+These methods are defined on the table returned by `Mince.Component`.
+
+### `:Construct()`
+Called on a component object when a tagged `Instance` is found within the `CreationParents`. This is where you should place all setup logic for the component object.
+
+### `:Removing()`
+Called on a component object when its associated `Instance` is destroyed, the tag is removed, or it is parented outside of its `CreationParents`. This is where you should place all cleanup logic.
+
+---
+
+## Component Object Properties
+
+Within the lifecycle methods, `self` refers to the component object, which has the following properties:
+
+- `self.Instance`: A direct reference to the `Instance` the component object is attached to.
+- `self.AttributeName`: Any attributes found on the `Instance` are automatically added as properties to the component object.
+
+---
+
+## Component Singleton Methods
+
+These methods are called on the singleton object returned by `Mince.Component`.
+
+### `:GetAll()`
+Returns an array containing all active component objects of this type.
+
+### `:FromInstance(Instance)`
+Returns the specific component object that is attached to the given `Instance`. Returns `nil` if no component object is found.

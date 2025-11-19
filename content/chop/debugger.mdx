@@ -1,0 +1,33 @@
+---
+title: Debugger
+description: How to use the Chop debugger console.
+---
+
+# The Chop Debugger
+
+Chop includes its own custom debugger console within Roblox Studio. To avoid clogging up the main Studio output with parsing information, Chop reports its own specific issues, warnings, and errors to this separate window.
+
+## Accessing the Debugger
+
+The debugger widget is accessible through a `PluginAction`, which means you can bind it to any keyboard shortcut you like.
+
+### Setting Up Your Shortcut
+
+1. In Roblox Studio, navigate to **File > Customize Shortcuts...**
+2. In the search bar, type "**chop**" to filter the actions.
+3. Find the action named "**Open Chop Debugger**" and select it.
+
+   ![Customize Shortcuts window with "Open Chop Debugger" selected](/screenshots/chopbind.png)
+
+4. Click in the "Shortcut" column and press the key combination you want to use. (For example, a common binding is `Ctrl + K`).
+5. Click **OK**.
+
+Once the shortcut is set, you can use it at any time to toggle the visibility of the Chop debugger widget.
+
+![Screenshot of the Chop Debugger widget in action](/screenshots/chopconsole.png)
+
+## Interpreting Console Output
+
+Seeing a warning or an error in the Chop console does **not** necessarily mean the plugin is broken or that there is a critical issue with your game.
+
+Chop is constantly parsing your scripts as you type. It is expected that there will be temporary errors when it analyzes malformed or incomplete code. These messages are part of the normal operation and help the plugin understand your code's structure in real-time.

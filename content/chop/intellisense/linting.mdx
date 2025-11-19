@@ -1,0 +1,29 @@
+---
+title: Linting
+description: An overview of Chop's custom linting rules for Mince.
+---
+
+# Linting Rules
+
+Chop's Intellisense provides custom linting to catch common errors and enforce best practices when using the Mince framework. These rules are designed to find problems before you even run your game.
+
+> **A Note on Performance:** Due to the way Roblox Studio’s environment is designed, it attempts to run any active linter on every script in your game simultaneously when a place is first opened. The underlying Luau analysis, while fast, is not quick enough to complete this for an entire project in milliseconds. This can cause a small, one-time lag spike in Studio, particularly in very large projects. Please be aware that this is a known limitation of the Studio environment, and a workaround is being investigated to improve this initial loading experience.
+
+## Available Rules
+
+Here are the Mince-specific linting rules provided by Chop.
+
+### `MINCE_MODULE_NOT_FOUND`
+Fires when `Mince:Get()` is called with a module name that Chop cannot find in any of the directories loaded by `Mince:LoadModules()`. This helps you catch typos or incorrect module names early.
+
+### `MINCE_EVENT_SERVER_MISSING`, `MINCE_FUNCTION_SERVER_MISSING`
+Ensures "remote symmetry" by checking that any event or function accessed on the client has already been created on the server. This prevents runtime errors caused by clients trying to access remotes that don't exist yet.
+
+### `MINCE_COMPONENT_NO_TAG`
+Triggers when a new `Mince.Component` is defined without a `Tag` field. The `Tag` is a required field for the component to be associated with any `Instance`.
+
+### `MINCE_TYPE_HINT_ERR`
+Validates the syntax of comment directive hints (`---@`). If a directive is malformed, this rule will provide information on its correct usage.
+
+### `MINCE_STATE_TABLE_OPERATION`
+Warns you if you attempt to use a standard `table` library function (e.g., `table.insert`) directly on a State object. This guides you to use the correct built-in State methods (e.g., `:ArrayInsert`) instead.

@@ -1,0 +1,34 @@
+---
+title: Function
+description: API reference for Mince networking functions.
+---
+
+# Function API
+
+Mince Functions provide a declarative API for request/response style communication, built on `RemoteFunction`. They are a removable addon.
+
+---
+
+### `Mince:GetFunction(NameOrInstance)`
+Retrieves or creates a networking function. A function must be created on the server before it can be accessed by a client.
+
+- **Arguments**:
+  - `NameOrInstance` (string | Instance): The unique name of the function or a replicated `Instance` to attach it to.
+
+---
+
+## Function Object API
+
+`Mince:GetFunction` returns a Function object with the following API:
+
+### `:Invoke(...)`
+Calls the remote function and yields the current script until a response is returned from the peer.
+
+- **Warning**: It is strongly discouraged to invoke the client from the server, as the server thread can be permanently stuck if the client never responds.
+
+### `.OnInvoke`
+A callback used to handle an incoming invocation and return a result.
+
+- **Signature**: `function(...)`
+- **On the Server**: The first argument passed to the callback will be the `Player` object of the invoking client.
+- **Return Value**: The value(s) returned from this function will be sent back to the caller of `:Invoke`.

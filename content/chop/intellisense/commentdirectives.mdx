@@ -1,0 +1,81 @@
+---
+title: Comment Directives
+description: Using comment directives for type hinting and commands.
+---
+
+# Comment Directives
+
+Chop uses special comments to provide hints to the Intellisense engine and to issue commands. These directives are a powerful way to enhance type information and control Chop's behavior directly from your code.
+
+**Important**: Directives must be in a single-line comment, start with **three dashes** (`---`), and be immediately followed by the directive symbol (`@` or `/`). They do not work in block comments (`--[[...]]`).
+
+There are two types of comment directives: Type Hints and Chop Commands.
+
+## Type Hints (`---@`)
+
+Type hints work similarly to JSDoc annotations in JavaScript, allowing you to "hint" the type of a variable binding. This tells Chop to provide rich, accurate autocomplete for that variable.
+
+### Exporting Types from Modules
+For a type to be available to the hint system, it must be explicitly exported from a Mince module using Luau's `export type` syntax.
+
+For example, inside a module named `SomeModule`, you would define and export a type like this:
+```lua
+-- Inside SomeModule
+export type ThisType = {
+    Name: string,
+    Value: number
+}
+
+-- ... module logic
+```
+
+### Asserting a Type
+
+Once a type is exported, you can use `---@ModuleName.TypeName` to inform Chop of a variable's type.
+
+```lua
+-- With a hint, Chop now knows MyVar is of type "ThisType" from "SomeModule"
+local MyVar: any = GetSomeData() ---@SomeModule.ThisType
+
+-- Now, you will get autocomplete for MyVar's properties
+print(MyVar.Name)
+```
+
+You can also hint the type of a module singleton itself, which is useful if you want to use your own module loading systems.
+
+```lua
+local SomeModule = ModuleLoader:Get("SomeModule") ---@SomeModule
+```
+
+### Limitations & Workarounds
+
+- **Export Source**: Types can only be "exported" from and recognized within Mince-managed modules.
+- **Not Real Types**: These hints are only for Chop's Intellisense. They are not real Luau types and cannot be re-exported.
+
+#### Silencing the Roblox LSP
+
+Because plugins do not have access to Roblox's official Luau Language Server (LSP), Chop's autocomplete suggestions will sometimes be mixed with Roblox's native suggestions.
+
+To fix this, you can use `: any` (or assert `:: any`) to silence the Roblox LSP for a specific variable. This will stop Roblox's type checker from interfering and remove any conflicting native suggestions.
+
+```lua
+-- This tells the Roblox LSP to ignore this variable, letting Chop take over.
+local MyItem: any = PlayerData:GetItemData("Sword") ---@Shop.Item
+```
+
+## Chop Commands (`---/`)
+
+Chop Commands are used to issue instructions to the Chop plugin itself.
+
+### `--/ChopTrack`
+
+Currently, the only available command is `ChopTrack`. Placing this directive directly after a function declaration tells Chop's **Insights** system to collect performance statistics and record information about that function's execution.
+
+```lua
+local function CalculateComplexValue(x, y, z) ---/ChopTrack
+    -- ... some expensive calculations
+    return result
+end
+```
+
+For more details on how this data is used, see [Insights](../insights).

@@ -11,7 +11,7 @@ const navbar = (
     logo={<b>Chop and Mince</b>}
   />
 )
-const footer = <Footer>MIT {new Date().getFullYear()} © Nextra.</Footer>
+const footer = <Footer>MIT {new Date().getFullYear()}</Footer>
  
 export default async function RootLayout({ children }) {
   return (
@@ -21,9 +21,8 @@ export default async function RootLayout({ children }) {
 
       suppressHydrationWarning
     >
-      <Head
-      color={{ hue: 282, lightness: { dark: 69, light: 30 }}}
-      >
+      <Head color={{ hue: 282, lightness: { dark: 69, light: 30 }}}>
+        
       </Head>
       <body>
         <Layout

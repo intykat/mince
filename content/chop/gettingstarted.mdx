@@ -1,15 +1,37 @@
-# Getting Started
+---
+title: Getting Started
+description: How to install and set up the Chop plugin.
+---
 
-```mermaid
-architecture-beta
-    group api(cloud)[API]
+import { Steps } from 'nextra/components'
 
-    service db(database)[Database] in api
-    service disk1(disk)[Storage] in api
-    service disk2(disk)[Storage] in api
-    service server(server)[Server] in api
+# Getting Started with Chop
 
-    db:L -- R:server
-    disk1:T -- B:server
-    disk2:T -- B:db
-```
+<Steps>
+### Get the Plugin
+First, you need to install the Chop plugin from the Roblox Plugin Marketplace. You can get that **[here](https://create.roblox.com/store/asset/109404353581896/Chop)**.
+
+### Allow Permissions
+Once Chop is installed, it will need permissions to perform two key actions. When prompted, please allow Chop to:
+1.  Download the Roblox API dump via httpservice.
+2.  Manage scripts in your game.
+
+These permissions are **absolutely necessary** for Chop's Intellisense and analysis features to function correctly.
+
+### Enable Chop in Your Project
+After setting permissions, open a project that contains a Mince module. In the **Plugins** tab of the Studio toolbar, you should see a button for Chop. Click this button to enable or disable the IntelliSense features for the current project.
+
+![The Chop button in the Plugins tab of the Studio toolbar](/screenshots/toolbar.png)
+
+### Verify Chop Has Started
+Check the main Roblox Studio **Output** console. You should see a message confirming that Chop has successfully started and is monitoring your scripts.
+
+![Output Console](/screenshots/chopoutput.png)
+
+</Steps>
+
+## Troubleshooting
+
+If you encounter any errors during setup or if Chop doesn't seem to be working correctly, please check the custom Chop debugger console for more detailed information.
+
+For instructions on how to access it, see the **[Debugger Guide](./debugger)**.

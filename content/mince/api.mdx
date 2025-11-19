@@ -1,0 +1,125 @@
+---
+title: API Reference
+description: A complete API reference for the Mince framework.
+---
+
+# Mince API Reference
+
+This document provides a comprehensive reference for the Mince framework's API.
+
+## Core Framework
+
+These are the primary functions for managing modules and the framework lifecycle.
+
+### `Mince:LoadModules(Instance)`
+Recursively searches for and loads all `ModuleScript`s within a given `Instance`, integrating them into the Mince framework.
+
+### `Mince:Get(string)`
+Retrieves a loaded module by its name. This is the standard way to access other modules within the framework.
+
+### `Mince:WaitUntilSetup(string)`
+Yields the current thread until the Mince framework has completed its setup for the specified context.
+- **Arguments**: `"Client"` or `"Server"`.
+
+---
+
+## Module Lifecycle Methods
+
+These optional methods can be defined in your modules to hook into the framework's initialization sequence.
+
+### `:Setup()`
+Called on a module after all modules have been loaded. This is the primary method for initialization logic.
+
+### `:GameStart()`
+Called on a module after the `:Setup()` method has been executed for **all** modules.
+
+---
+
+## Components
+
+Components attach logic to game objects using `CollectionService` tags.
+
+### `Mince.Component(Table)`
+Defines a new component. The returned object is a singleton used to manage all objects of that component type.
+- **Options Table**:
+  - `Tag` (string, required): The `CollectionService` tag to associate with.
+  - `CreationParents` (array, optional): A list of `Instance`s to search for tagged objects.
+
+### Component Lifecycle Methods
+
+### `:Construct()`
+Called on a component object when a tagged `Instance` is found. Use this for setup logic.
+
+### `:Removing()`
+Called on a component object when the `Instance` is destroyed or the tag is removed. Use this for cleanup.
+
+### Component Object Properties
+- `self.Instance`: A reference to the `Instance` the component object is attached to.
+- `self.AttributeName`: Attributes on the `Instance` are directly accessible on the component object.
+
+### Component Singleton Methods
+
+### `:GetAll()`
+Returns an array of all active component objects for that component type.
+
+### `:FromInstance(Instance)`
+Returns the specific component object attached to the given `Instance`.
+
+---
+
+## Networking
+
+Mince provides declarative and robust APIs for client-server communication.
+
+### Events
+Built on `RemoteEvent` and `UnreliableRemoteEvent` for one-way communication.
+
+#### `Mince:GetEvent(string, [boolean])`
+Retrieves or creates a networking event.
+- **Arguments**:
+  - `EventName` (string): The unique name of the event. Can also be a replicated `Instance`.
+  - `IsUnreliable` (boolean, optional): If `true`, uses an `UnreliableRemoteEvent`.
+
+#### Event Object API
+- `.Event`: A `BindableEvent`-like object. Connect to this to listen for data.
+- `:Fire(...)`: Fires the event. On the server, the first argument must be the destination `Player`.
+- `:FireAll(...)` (Server-only): Fires the event to all clients.
+- `:Extend(string)`: Creates a "sub-event" that acts as its own independent event object, useful for organization.
+
+### Functions
+Built on `RemoteFunction` for request/response communication.
+
+#### `Mince:GetFunction(string)`
+Retrieves or creates a networking function.
+- **Arguments**:
+  - `FunctionName` (string): The unique name of the function. Can also be a replicated `Instance`.
+
+#### Function Object API
+- `:Invoke(...)`: Calls the remote function and yields until a response is returned.
+- `.OnInvoke = function(...)`: The callback handler for an incoming invocation. Must return a value.
+
+### States
+Advanced, table-like data structures that synchronize from server to client.
+
+#### `Mince:GetState(...)`
+Retrieves or creates a state.
+- **Server Signature**: `(NameOrInstance, [Group], [InitialData])`
+- **Client Signature**: `(NameOrInstance, [Group])`
+
+#### `Mince:WaitForState(...)` (Client-only)
+Yields until a state is available.
+- **Signature**: `(NameOrInstance, [Group])`
+
+#### State Object API
+- `.Changed:Connect(function(index, newValue, oldValue))`: Fires when any value in the state changes.
+- `:Observe(string, function(newValue, oldValue))`: Watches for changes to a specific key.
+- `:GetRaw()`: Returns a raw, deep copy of the state's data as a standard Lua table.
+- **Array Methods**: `:ArrayInsert`, `:ArrayUnpack`, `:ArrayMove`, `:ArrayMaxn`, `:ArrayFind`, `:ArrayConcat`, `:ArrayRemove`, `:ArrayClear`.
+
+#### Root State API
+These methods are only available on the top-level state object returned by `GetState`.
+- `:Destroy()`: Destroys the state.
+- `:SetAudience({Player})` (Server-only): Restricts state replication to a specific list of players.
+- `:Detach()` (Client-only): Stops the client from receiving server updates, for client-side prediction.
+- `:Reattach()` (Client-only): Resumes receiving server updates.
+- `:ForceUpdate(Player, string)` (Server-only): Forces a client to sync a specific key with the server's value.
