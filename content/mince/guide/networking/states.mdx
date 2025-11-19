@@ -1,0 +1,149 @@
+---
+title: States
+description: A guide to using Mince's advanced state synchronization system.
+---
+
+# Networking with States
+
+States are the most powerful and complex networking feature in Mince. They provide a robust solution for synchronizing table-like data structures from the server to clients, behaving like super-powered `Attributes`.
+
+States are designed to handle complex data, selective replication, and even advanced client-side prediction models.
+
+### States vs. Roblox Attributes
+
+Here’s a quick comparison of how Mince States improve upon the foundation of Roblox's built-in attributes:
+
+| Feature                      | Mince States                               | Roblox Attributes                                  |
+| ---------------------------- | ------------------------------------------ | -------------------------------------------------- |
+| **Data Types**               | Complex data, nested tables, any type      | Primitives, `Vector3`, `CFrame`, etc. (No tables)    |
+| **Replication Control**      | Selective (audiences) or global          | Global only (replicates to all viewing clients)    |
+| **Client-Side Prediction**   | Built-in detach/reattach API               | Not supported; requires manual implementation      |
+| **Nested Change Events**     | Supported via sub-states                   | Not supported; only fires for top-level attributes |
+
+## Creating and Accessing States
+
+Like other Mince networking features, a State **must be created on the server** before a client can access it.
+
+### Getting a State
+
+- **On the Server**: `Mince:GetState(NameOrInstance, [Group], [InitialData])`
+  - `NameOrInstance`: A unique string name or a replicated `Instance` to bind the state to.
+  - `Group` (String, optional): A group identifier, allowing for multiple states on one instance. Defaults to `"Default"`.
+  - `InitialData` (Table, optional): A table containing the initial data for the state.
+
+- **On the Client**: `Mince:GetState(NameOrInstance, [Group])` is used to get a state that has already been created by the server.
+
+- **On the Client (Waiting)**: `Mince:WaitForState(NameOrInstance, [Group])` yields the script until the requested state is available. This is essential for states tied to dynamic instances like player characters.
+
+```lua
+-- Server creating a global state with initial data
+local GameState = Mince:GetState("GameState", {
+    RoundInProgress = false,
+    WinningTeam = nil
+})
+
+-- Client waiting for a player-specific state
+local PlayerState = Mince:WaitForState(game.Players.LocalPlayer)
+print("My coins:", PlayerState.Coins)
+```
+
+## Working with State Data
+
+Think of a State as a shared table. The server can write to it, and the changes will automatically replicate to all subscribed clients.
+
+**Important**: Replication is one-way. Server changes update clients, but client changes are local and do not update the server.
+
+```lua
+-- Server
+local MyState = Mince:GetState("MyState")
+MyState.SomeValue = true
+MyState.PlayerLevels = {
+    Player1 = 10,
+    Player2 = 12
+}
+
+-- Client (after the above code runs on the server)
+local MyState = Mince:GetState("MyState")
+print(MyState.SomeValue) --> true
+print(MyState.PlayerLevels.Player1) --> 10
+```
+
+## Data Integrity and Encoding
+
+Behind the scenes, Mince States use a custom table encoding algorithm to send data across the client-server boundary. This provides significant advantages over Roblox's default `RemoteEvent` behavior, which serializes tables using a JSON-like format.
+
+The goal of this custom encoding is to make States behave as closely as possible to regular Lua tables.
+
+- **Data Integrity**: The default remote serialization can lose data in "mixed tables" (tables with both array-like and dictionary-like keys). Mince's encoder ensures that all your data arrives intact.
+- **Key Preservation**: Roblox's serializer can sometimes convert string keys that look like numbers (e.g., `"1"`) into actual number keys (`1`). Mince's encoder preserves the original key types, preventing unexpected behavior.
+- **Efficiency**: The custom encoding is typically slightly smaller and more efficient than the default JSON-based format.
+
+## Detecting Changes
+
+You can listen for changes to a state's data on both the client and the server.
+
+- `State.Changed:Connect(function(index, newValue, oldValue))`: A general-purpose event that fires for any change within the state.
+- `State:Observe("Index", function(newValue, oldValue))`: A more precise way to watch for changes to a specific top-level key in the state.
+
+Nested tables act as their own sub-states. To observe a nested value, you access the sub-state first.
+
+```lua
+-- Watch for any change
+GameState.Changed:Connect(function(index, new)
+    print(`GameState property '{index}' changed to '{new}'`)
+end)
+
+-- Watch for a specific change
+GameState:Observe("RoundInProgress", function(isRoundInProgress)
+    if isRoundInProgress then
+        print("The round has started!")
+    end
+end)
+
+-- Watch for a nested change
+GameState.PlayerLevels:Observe("Player1", function(newLevel)
+    print("Player1 leveled up to", newLevel)
+end)
+```
+
+## Raw Data and Table Operations
+
+Because States are managed by a metatable, you cannot use standard `table` library functions on them directly.
+
+- `State:GetRaw()`: Returns a deep copy of the state's data as a raw Lua table. This is useful for debugging, printing, or iterating over the data.
+- `State:Array...`: States provide their own methods for array manipulation, including `ArrayInsert`, `ArrayUnpack`, `ArrayMove`, `ArrayMaxn`, `ArrayFind`, `ArrayConcat`, `ArrayRemove`, and `ArrayClear`.
+
+If you need to perform a complex operation not covered by the State API, the pattern is to get a raw copy, modify it, and then re-assign the modified table to the state.
+
+## Root State Management API
+
+The "root state" (the object returned by `GetState`) has special methods for managing its lifecycle and data flow.
+
+- `:Destroy()` (Client & Server): Destroys the state. If called on the server, it is destroyed for all clients.
+- `:SetAudience({Player})` (Server-only): Sets which clients the state replicates to. By default, the audience is `nil`, meaning it replicates to everyone. Call with `nil` to remove the audience restriction.
+
+### Client Prediction API
+
+To enable client-side prediction, a client can temporarily manage its own state.
+
+- `:Detach()` (Client-only): The client stops receiving updates from the server. Any changes made to the state are now local, but still fire the `.Changed` and `:Observe` events locally.
+- `:Reattach()` (Client-only): The client resumes listening for server updates. **Note:** This does not automatically sync the state; the server's next update will overwrite any local changes.
+- `:ForceUpdate(Player, "Index")` (Server-only): Forces a specific client to synchronize a specific index with the server's current value, even if the client is detached.
+
+This API enables a common prediction pattern:
+1. Client detaches its state.
+2. Client performs an action and updates its local state immediately for responsiveness.
+3. Client sends an event to the server reporting its action.
+4. Server validates the action. If it's invalid (due to latency, cheating, etc.), the server can call `:ForceUpdate()` to roll the client's state back to the correct value.
+
+## API Key Conflicts
+
+If you need to use a key in your state that conflicts with an API method name (like `"Changed"` or `"Observe"`), you can access the API method using a special syntax:
+
+```lua
+-- If you have a key named "Changed"
+State("Changed"):Connect(...)
+
+-- If you have a key named "Observe"
+State("Observe")(State, "SomeIndex", function() end)
+```

@@ -1,0 +1,37 @@
+---
+title: Introduction
+description: An overview of the Mince framework.
+---
+
+# Mince: A Lightweight Game Framework
+
+Mince is a game framework designed to tackle common development challenges, focusing on declarative networking, clean code organization, and preventing race conditions during code loading. Its primary goal is to provide a streamlined and simplified interface for both server and client-side logic.
+
+## Philosophy: Lightweight and Modular
+
+At its core, Mince is anti-bloat. Its functionality is delivered as a collection of modular addons (which can be found in the mince module), allowing you to include only the tools you need, and remove tools you dont. The framework is also highly configurable, letting you define custom locations for your modules and configuration right from the bootstrap process.
+
+## Structured Codebase
+
+Mince promotes a clean project structure by separating code into distinct module and configuration directories. This separation of concerns makes it easier to manage your codebase as it grows. You can even specify multiple source directories, enabling flexible and scalable architectures.
+See the **[Code Execution Model](./mince/codemodel)** for more information.
+
+## Secure Networking
+
+To ensure reliable communication, Mince includes a built-in handshake between the client and server. This initial verification step guarantees that the networking layer is secure and ready before any game logic is executed.
+
+## Core Features
+
+Mince's architecture is built on a few key concepts:
+
+### Code Execution
+Mince offers three primary methods for structuring and running your game logic:
+- **[Mince Modules](./mince/guide):** Modules that are run and managed by the framework itself. They act as singletons.
+- **[Configuration](./mince/guide/config):** Static configuration tables that are loaded and attached to the framework for easy access.
+- **[Components](./mince/guide/components):** Allow you to cleanly attach behavior and logic to instances using tags.
+
+### Networking Model
+The framework's networking is built around three distinct patterns for communication:
+- **[Events](./events):** Act similarly to RemoteEvents.
+- **[Functions](./functions):** Act similarly to RemoteFunctions.
+- **[States](./states):** Act similarly to Attributes.

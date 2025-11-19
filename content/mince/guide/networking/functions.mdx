@@ -1,0 +1,83 @@
+---
+title: Functions
+description: A guide to using Mince for request/response networking.
+---
+
+# Networking with Functions
+
+Functions in Mince are a declarative abstraction for request/response style networking, built on top of Roblox's standard [`RemoteFunction`](https://create.roblox.com/docs/reference/engine/classes/RemoteFunction). They are ideal for when you need to ask for information and get a direct response back.
+
+## Lifecycle and Access
+
+Just like Mince Events, Functions have strict lifecycle requirements. A Function **must** be created on the server before any client script attempts to access it. If a client calls `Mince:GetFunction()` for a function that doesn't exist on the server, Mince will raise an error. This design enforces a clean, predictable networking architecture.
+
+## The Function API
+
+The API for functions is straightforward, consisting of a getter, an invoker, and a handler.
+
+### `Mince:GetFunction("FunctionName")`
+
+This retrieves or creates a new function object.
+
+### `Function:Invoke(...)`
+
+This method calls the function on the remote peer and yields the current thread until a response is returned.
+
+### `Function.OnInvoke = function(...)`
+
+This callback is used to handle an incoming invocation and return a result. The function you assign to `OnInvoke` will receive the arguments from the caller (with the `Player` object as the first argument if on the server) and its return values will be sent back as the response.
+
+### Client-to-Server Example
+
+This is the most common and recommended use case for RemoteFunctions.
+
+```lua
+-- Server: Set up the handler
+local GetPlayerData = Mince:GetFunction("GetPlayerData")
+
+GetPlayerData.OnInvoke = function(Player)
+    -- In a real game, you would fetch this from a data module
+    local PlayerData = {
+        Name = Player.Name,
+        Level = 10,
+        Gold = 500
+    }
+    return PlayerData
+end
+```
+
+```lua
+-- Client: Invoke the function and wait for the response
+local GetPlayerData = Mince:GetFunction("GetPlayerData")
+
+-- This line will pause until the server returns a value
+local MyData = GetPlayerData:Invoke()
+
+if MyData then
+    print("My gold:", MyData.Gold)
+end
+```
+
+## Instance-Attached Functions
+
+Similar to events, you can pass a replicated `Instance` to `Mince:GetFunction()` instead of a string. This mounts the function to that specific instance, linking their lifecycles. This is useful for components that need to handle unique requests.
+
+```lua
+-- Inside a Component's :Construct() method on the server
+local GetItemPrice = Mince:GetFunction(self.Instance)
+
+GetItemPrice.OnInvoke = function(Player)
+    -- self.Price is an attribute on the instance
+    return self.Price or 10 
+end
+```
+
+## Do Not Invoke the Client
+
+While the Mince API allows for the server to invoke a client, it is **strongly discouraged** as a general practice. Invoking the client from the server introduces significant risks:
+
+1.  **Thread Pausing:** When the server invokes a client, the server-side script pauses and waits for that specific client to respond. If the client disconnects, crashes, or an exploiter intentionally never sends a response, **the server thread will be stuck forever**. This is a common source of memory leaks and performance degradation.
+
+2.  **Untrustworthy Data:** Any data returned from a client to the server can **never be trusted**. An exploiter can modify their client-side code to return false, misleading, or malformed data, which can lead to bugs or security vulnerabilities if not rigorously validated on the server.
+
+For these reasons, you should always prefer a one-way communication model from server to client. If you need to get information from the client, have the client *send* it to the server using a `Mince:Event` instead of having the server *ask* for it with a `Mince:Function`.

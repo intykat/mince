@@ -1,0 +1,84 @@
+---
+title: Modules
+description: A guide to understanding and using modules within the Mince framework.
+---
+
+# Working with Mince Modules
+
+Modules loaded by the Mince framework behave, for the most part, just like standard Luau `ModuleScript`s. However, Mince provides a few special methods and functions that integrate your modules directly into the framework's boot process and lifecycle.
+
+## Loading Modules
+
+Modules are loaded into the Mince framework by calling `Mince:LoadModules(Directory)`. This function takes an Instance as an argument and recursively searches for `ModuleScript`s within it to load.
+
+You can call this function multiple times to load modules from several different locations. 
+
+```lua
+Mince:LoadModules(game.ReplicatedStorage.Source) -- Source is loaded before AnotherPlace
+Mince:LoadModules(game.ReplicatedStorage.AnotherPlace)
+```
+
+## Special Framework Methods
+
+To hook into Mince's initialization sequence, your modules can implement two special, optional methods: `:Setup()` and `:GameStart()`.
+
+### The `:Setup()` Method
+If a module has a `:Setup()` method, the framework will call it during the setup phase. This is the primary place to write your initialization code, especially logic that needs to access other modules. By the time `:Setup()` runs, you can be sure that all other modules have been loaded and are available.
+
+### The `:GameStart()` Method
+The `:GameStart()` method is called after **all** modules have had their `:Setup()` method executed. This is useful for post-initialization logic or for code that needs to run with the guarantee that every module in the framework has completed its setup.
+
+## Accessing Mince Modules with `Mince:Get()`
+
+Instead of using `require()`, you'll use `Mince:Get("ModuleName")` to access other modules loaded by the framework.
+
+It's crucial to understand the timing and behavior of this function. When you call `Mince:Get()`, it immediately returns a table. If the Mince framework has not yet loaded the modules (i.e., before the setup phase), this table will be empty.
+
+You should hold onto this reference. Mince will automatically populate this exact same table with the module's functions and properties right before the `:Setup()` methods are called. This mechanism allows you to get references to all your dependencies at the top of your script, even though the modules themselves aren't fully available yet.
+
+## Waiting for Mince to Setup
+Code that is being run outside of a mince managed module can also wait for mince to be setup by calling `Mince:WaitUntilSetup("Client")` or `Mince:WaitUntilSetup("Server")`. This will yield the current thread until the respective context has been setup.
+
+## Best Practices
+
+### Access Modules at the top of the Script
+It is recommended to get module dependencies at the top of your script. This makes your dependencies explicit and easy to see at a glance.
+
+```lua
+-- At the top of your file
+local SomeModule = Mince:Get("SomeModule")
+
+-- Later, in a framework method...
+function MyModule:Setup()
+	-- You can safely use the module here because Setup() is guaranteed
+	-- to run after all modules have been loaded and are available via Get().
+	SomeModule:DoSomething()
+end
+```
+
+### Treat Modules as Singletons
+
+Mince modules are designed to be **singletons**. A singleton is a design pattern that ensures there is only one instance of a particular object and provides a single, global point of access to it.
+
+You already use singletons all the time when working in Roblox. Services like `game.Workspace`, `game.Players`, and `game.ServerScriptService` are all singletons; there is only one Workspace and one Players service for the entire game, and you can access them from anywhere.
+
+Mince treats your modules the same way. There should only ever be one module named `"SomeModule"` within a given context (one for the client, one for the server). The function `Mince:Get("SomeModule")` acts as the global access point to that single instance. This pattern simplifies dependency management and ensures that all parts of your code are interacting with the same object.
+
+### Never Share Modules
+
+A critical best practice is to **never share Mince modules between the client and the server**. Each context (client and server) should have its own separate instance of the Mince framework and its own set of modules.
+
+While you could place a Mince module in `ReplicatedStorage` and have both the client and server load it, this is an anti-pattern and will lead to unpredictable behavior. The state of a module on the client should be completely independent of its state on the server. Sharing code between the client and server also makes exploiting easier.
+
+If you have code that needs to be shared, such as a utility library or a class, it should be a standard `ModuleScript` in `ReplicatedStorage` that is `require()`'d by your client and server-side Mince modules, not loaded as a Mince module itself.
+
+### Module Organization and Logic
+
+It's important to understand that not all of your code should be forced into a Mince module. While it can be tempting to have all your code run within the framework, Mince modules should be reserved for singleton-like services.
+
+A common and highly recommended practice is to create a folder in `ReplicatedStorage` called `Modules`. This folder can house code that doesn't fit the singleton pattern, such as classes, packages, or other utilities. These can then be required by your Mince modules or other scripts as needed.
+
+Mince will load any `ModuleScript` that is a descendant of a folder being loaded. However, if a `ModuleScript` is parented to another `ModuleScript`, it will be ignored by the loader. This allows you to co-locate private modules or classes with a Mince module without them being loaded by the framework.
+
+For game objects and other instances that require logic, it's best to use **[components](./guide/components)** rather than attaching `Script` or `LocalScript` instances. This keeps your code organized and your game hierarchy clean. Actual script instances should be used as sparingly as possible.
+

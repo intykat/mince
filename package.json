@@ -1,28 +1,18 @@
 {
-  "name": "mince-docs",
-  "version": "0.0.1",
-  "description": "Mince docs",
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/intykat/mince"
-  },
-  "author": "intykat",
-  "license": "MIT",
   "dependencies": {
-    "next": "^15.0.3",
-    "nextra": "^3.2.3",
-    "nextra-theme-docs": "^3.2.3",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "next": "^16.0.3",
+    "nextra": "^4.6.0",
+    "nextra-theme-docs": "^4.6.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "scripts": {
+    "dev": "next",
+    "build": "next build",
+    "start": "next start",
+    "postbuild": "pagefind --site .next/server/app --output-path public/_pagefind"
   },
   "devDependencies": {
-    "@types/node": "18.11.10",
-    "typescript": "^4.9.3"
-  },
-  "main": "index.js"
+    "pagefind": "^1.4.0"
+  }
 }

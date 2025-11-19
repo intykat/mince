@@ -1,0 +1,130 @@
+---
+title: Components
+description: A guide to using components for managing game object logic in Mince.
+---
+
+# Components
+
+Components are a powerful feature in Mince for attaching logic to instances in your game using `CollectionService` tags. They provide a clean and organized way to manage the behavior of game objects without cluttering your hierarchy with `Script` and `LocalScript` instances.
+
+## Creating a Component
+
+You can define a component by calling `Mince.Component()` with a table of options. The two options are `Tag` and `CreationParents`.
+
+- `Tag`: A string representing the `CollectionService` tag that this component will be associated with. Every instance with this `Tag` will have the component's logic attached to it.
+- `CreationParents`: An array of instances where the component will look for new instances with the specified tag.
+
+`CreationParents` is optional. Its purpose is to control where components are created, which is useful for preventing components from being created prematurely. For instance, if a component is designed to work only in the `Workspace`, but its instance is temporarily stored in `ReplicatedStorage`, `CreationParents` can be set to `{game.Workspace}`. This way, the component's `:Construct()` method will only be called when the instance is parented to the `Workspace`, and `:Removing()` will be called when it's removed from the `Workspace`.
+
+Here is a basic component definition:
+
+```lua
+local MyComponent = Mince.Component{
+	Tag = "MyComponentTag",
+    
+	CreationParents = {
+        game.Workspace
+    }
+}
+```
+
+## Component Lifecycle
+
+Components have special methods that are called by Mince during their lifecycle.
+
+### `:Construct()`
+
+The `:Construct()` method is called on a component object when an object with the corresponding tag is found within the `CreationParents`. This is where you should place all your setup logic for the object.
+
+### `:Removing()`
+
+The `:Removing()` method is called when the tag is removed from the instance or the instance is destroyed. This is the place to do any necessary cleanup, like disconnecting events.
+
+## Component Objects
+
+When a component is attached to an instance, a new "component object" is created. This is a table that contains the logic for that specific Instance. Think of it as if you were creating a class for each instance with the associated tag.
+
+### `self.Instance`
+
+Inside the component's methods, you can access the Instance it's attached to through `self.Instance`.
+
+### Attributes
+
+Any attributes on the Instance are directly attached to the component object itself. You can access them with `self.AttributeName`.
+
+## Example: A Configurable Light Component
+
+Here is an example of a `Light` component that creates and manages a `PointLight` within a part. The attributes of the part are used to configure the light's properties, demonstrating how you can create highly configurable components.
+
+You could have many parts with the "Light" tag, each with different `LightColor`, `Brightness`, and `Flickers` attributes, and this single component definition would handle them all.
+
+```lua filename="LightComponent"
+-- Services
+local RunService = game:GetService("RunService")
+
+-- Modules
+local Mince = require(game.ReplicatedStorage.Modules.Mince)
+
+-- Component Definition
+local Light = Mince.Component{
+	Tag = "Light",
+	CreationParents = {game.Workspace}
+}
+
+function Light:Construct()
+	self.Light = Instance.new("PointLight")
+	self.Light.Parent = self.Instance
+
+	-- Configure the light using attributes, with default values
+	self.Light.Color = self.LightColor or Color3.new(1, 1, 1)
+	self.Light.Brightness = self.Brightness or 2
+	
+	if self.Flickers then
+		self.Connection = RunService.Heartbeat:Connect(function(DeltaTime)
+			local Intensity = math.noise(tick() * 5)
+			self.Light.Brightness = (self.Brightness or 2) + Intensity
+		end)
+	end
+end
+
+function Light:Removing()
+	if self.Connection then
+		self.Connection:Disconnect()
+	end
+end
+
+return Light
+```
+
+## The Component Singleton
+
+When you define a component, the returned value is a "singleton" object that can be used to manage all instances of that component.
+
+### `:GetAll()`
+
+This method returns an array of all the active component objects.
+
+```lua
+local Light = Mince:Get("LightComponent")
+local AllLights = Light:GetAll()
+
+for _, LightObject in ipairs(AllLights) do
+	if LightObject.Flickers then
+		print("Found a flickering light:", LightObject.Instance)
+	end
+end
+```
+
+### `:FromInstance(Instance)`
+
+This method returns the component object that is attached to a specific game object.
+
+```lua
+local Light = Mince:Get("LightComponent")
+local Part = game.Workspace.SomeLightPart
+local LightObject = Light:FromInstance(Part)
+
+if LightObject then
+	LightObject.Light.Enabled = false -- Turn off the light
+end
+```

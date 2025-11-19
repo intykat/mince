@@ -1,0 +1,73 @@
+---
+title: Configuration
+description: A guide to using configuration modules in Mince.
+---
+import { FileTree } from 'nextra/components'
+
+# Configuration Modules
+
+Configuration modules in Mince are a way to store and access static data across your game. They are loaded using the `Mince:LoadConfig(Directory)` method and are designed to hold unchanging information like settings, balance values, or asset paths.
+
+## How Config Modules Work
+
+When you point `Mince:LoadConfig()` to a folder, it will load any descendant `ModuleScript` (with a parent that is a folder) inside it and store the table it returns into the `Mince.Config` table. The key used to store the config data is the name of the `ModuleScript` itself.
+
+For example, consider the following `ModuleScript` named `SomeConfig`:
+
+```lua filename="SomeConfig"
+return {
+    ["SomeKey"] = "SomeValue"
+}
+```
+
+After being loaded by Mince, you can access this data from any script like so:
+
+```lua
+local SomeValue = Mince.Config.SomeConfig.SomeKey
+print(SomeValue) -- Outputs: SomeValue
+```
+
+## Best Practices
+
+### Keep Config Static
+
+Configuration modules should only return tables containing static data. They should **never** return functions. The purpose of config is to be a central, read-only repository of information.
+
+While it is technically possible to change a value in `Mince.Config` at runtime, this is strongly discouraged. Modifying shared configuration values from different parts of your codebase can lead to unpredictable behavior, race conditions, and code that is difficult to debug. Treat the `Mince.Config` table as read-only.
+
+### Naming and Hierarchy
+
+Every configuration module in the same context (client or server) must have a unique name. Mince populates the `Mince.Config` table directly using the module's name, regardless of its location within subfolders of the loaded directory. If two config modules have the same name, one will overwrite the other.
+
+### Shared Configuration
+
+A common and effective pattern is to share configuration between the client and the server. This is typically done by having a `Shared` folder inside the client's configuration directory. The server can then also be pointed to this `Shared` folder to load the same set of configuration modules.
+
+For example, your file structure might look like this:
+
+<FileTree>
+  <FileTree.Folder name="ReplicatedStorage" defaultOpen>
+    <FileTree.Folder name="Runtime" defaultOpen>
+      <FileTree.Folder name="Config" defaultOpen>
+        <FileTree.File name="Sounds" />
+        <FileTree.Folder name="Shared" defaultOpen>
+          <FileTree.File name="GameModes" />
+          <FileTree.File name="WeaponData" />
+        </FileTree.Folder>
+      </FileTree.Folder>
+    </FileTree.Folder>
+  </FileTree.Folder>
+  <FileTree.Folder name="ServerScriptService" defaultOpen>
+    <FileTree.Folder name="Runtime" defaultOpen>
+      <FileTree.Folder name="Config" defaultOpen>
+        <FileTree.File name="MapSettings" />
+      </FileTree.Folder>
+    </FileTree.Folder>
+  </FileTree.Folder>
+</FileTree>
+
+In this setup:
+- The client would load from `ReplicatedStorage.Runtime.Config`.
+- The server would load from `ServerScriptService.Runtime.Config` **and** `ReplicatedStorage.Runtime.Config.Shared`.
+
+This ensures both the client and server have access to `Mince.Config.GameModes` and `Mince.Config.WeaponData`.

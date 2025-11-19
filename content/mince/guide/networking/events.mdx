@@ -1,0 +1,135 @@
+---
+title: Events
+description: A guide to using Mince for real-time client-server communication.
+---
+
+# Networking with Events
+
+Events in Mince are a declarative and streamlined way to handle real-time client-server communication, acting as a powerful abstraction over Roblox's standard [`RemoteEvent`](https://create.roblox.com/docs/reference/engine/classes/RemoteEvent) and [`UnreliableRemoteEvent`](https://create.roblox.com/docs/reference/engine/classes/UnreliableRemoteEvent) instances.
+
+## Getting an Event
+
+You can get or create a new event object by calling `Mince:GetEvent()`.
+
+```lua
+-- Get a standard, reliable event
+local SomeEvent = Mince:GetEvent("SomeEvent")
+
+-- Get an unreliable event
+local UnreliableEvent = Mince:GetEvent("SomeUnreliableEvent", true)
+```
+
+The `Mince:GetEvent` function takes two arguments:
+1.  `EventName` (string): The unique identifier for the event.
+2.  `IsUnreliable` (boolean, optional): If `true`, the event will use an `UnreliableRemoteEvent`. Defaults to `false`.
+
+### The Event Object API
+
+Calling `Mince:GetEvent()` returns an event object with the following members:
+
+- `.Event`: A `Signal`. Connect to this to listen for incoming event data.
+- `:Fire(...)`: A method to fire the event.
+- `:FireAll(...)` (Server-only): A method to fire the event to all clients at once.
+
+The API is designed to be consistent across the client and server, with one key difference:
+
+- **On the Server**: `Event:Fire(Player, ...)` requires the first argument to be the `Player` object you are sending the event to.
+- **On the Client**: `Event:Fire(...)` sends the event directly to the server.
+
+```lua
+-- Server-side listener
+local SomeEvent = Mince:GetEvent("SomeEvent")
+
+SomeEvent.Event:Connect(function(Player, Message)
+    print(`Received message from {Player.Name}: {Message}`)
+    SomeEvent:Fire(Player, "Thanks for the message!")
+end)
+```
+
+```lua
+-- Client-side listener
+local SomeEvent = Mince:GetEvent("SomeEvent")
+
+SomeEvent.Event:Connect(function(Message)
+    print(`Received message from Server: {Message}`)
+end)
+
+-- Fire the event to the server
+SomeEvent:Fire("Hello from the client!")
+```
+
+## The Event Lifecycle
+
+It is important to understand that Mince expects server code to initialize first. If a client script calls `Mince:GetEvent()` for an event that has not yet been created on the server (or more often, never created on the server), **Mince will raise an error**.
+
+This behavior is intentional to prevent disorganized and hard-to-debug networking code. Because of this, it is highly recommended to define all your events at the top of your scripts.
+
+```lua
+-- Recommended: Define at the top of the script
+local SomeEvent = Mince:GetEvent("SomeEvent")
+local AnotherEvent = Mince:GetEvent("AnotherEvent")
+
+function MyModule:Setup()
+    -- Safe to use events here
+end
+```
+
+## Extended Events
+
+Events can be "extended" to create logical sub-categories. This allows you to manage multiple, related actions through a single underlying `RemoteEvent`, which can help organize your code.
+
+An extended event behaves like its own independent event. You connect to its `.Event` member directly, and you fire it directly. The complexity of routing the event through the single base `RemoteEvent` is handled automatically behind the scenes.
+
+```lua
+-- Define a base event for player actions
+local PlayerAction = Mince:GetEvent("PlayerAction")
+
+-- Create extended events from the base event
+local JumpAction = PlayerAction:Extend("Jump")
+local CrouchAction = PlayerAction:Extend("Crouch")
+
+-- Fire a specific action from the client
+JumpAction:Fire()
+
+-- On the server, connect to the specific extended event
+JumpAction.Event:Connect(function(Player)
+    print(Player.Name .. " jumped!")
+end)
+
+CrouchAction.Event:Connect(function(Player)
+    print(Player.Name .. " crouched!")
+end)
+```
+
+## Instance-Attached Events
+
+Instead of a string, you can pass a replicated `Instance` to `Mince:GetEvent()`. This attaches the event's lifecycle to that specific `Instance`, making it ideal for components that require unique communication channels. The event is automatically cleaned up when the `Instance` is destroyed.
+
+```lua
+-- Inside a Component's :Construct() method
+local ComponentEvent = Mince:GetEvent(self.Instance)
+local PressButtonEvent = ComponentEvent:Extend("PressButton")
+
+-- When a player interacts with this specific component
+PressButtonEvent:Fire()
+```
+
+## A Note on Performance
+
+Mince does not include complex optimizations like buffer compression. This is a deliberate design choice. If your game is hitting the `RemoteEvent` data rate limits (typically around 50 KB/s), it often indicates a deeper architectural issue that should be solved with a different approach (like selective replication or state synchronization) rather than by adding overhead to the event system itself.
+
+## Usage Outside of Mince
+
+If you are working in a client script that is not a Mince module, you must wait for the Mince framework to complete its setup before accessing any events. This ensures that the server has had time to create the events and replicate them to the client.
+
+You can do this by using `Mince:WaitUntilSetup("Client")`.
+
+```lua
+-- In a LocalScript outside of Mince
+local Mince = require(ReplicatedStorage.Modules.Mince)
+
+Mince:WaitUntilSetup("Client")
+
+-- It is now safe to get events
+local SomeEvent = Mince:GetEvent("SomeEvent")
+```

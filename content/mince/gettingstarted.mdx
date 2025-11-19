@@ -1,0 +1,83 @@
+---
+title: Getting Started
+description: Set up a new project.
+---
+
+import { Steps } from 'nextra/components'
+import { FileTree } from 'nextra/components'
+
+# Getting Started
+
+## Creating a new project from scratch
+<Steps>
+### Get the Mince Module
+
+The Mince module can be found here.
+
+### Create your architecture
+
+Create folders that you want your code to run from. This is the recommended folder structure for mince projects:
+
+<FileTree>
+  <FileTree.Folder name="ReplicatedStorage" defaultOpen>
+
+    <FileTree.Folder name="Runtime" defaultOpen>
+      <FileTree.Folder name="Config" defaultOpen >
+        <FileTree.Folder name="Shared" />
+      </FileTree.Folder>
+
+      <FileTree.Folder name="Source" />
+    </FileTree.Folder>
+
+    <FileTree.Folder name="Modules" defaultOpen>
+      <FileTree.File name="Mince" />
+    </FileTree.Folder>
+
+  </FileTree.Folder>
+
+  <FileTree.Folder name="ServerScriptService" defaultOpen>
+
+    <FileTree.Folder name="Runtime" defaultOpen>
+      <FileTree.Folder name="Config" />
+      <FileTree.Folder name="Source" />
+    </FileTree.Folder>
+
+  </FileTree.Folder>
+</FileTree>
+
+The rest of this tutorial assumes this file structure.
+
+### Bootstrap Mince
+
+Mince was designed to be as lightweight as possible, as such you must tell Mince where to load your code from, and tell Mince to initiate the framework. 
+This gives you control over the load order of modules and configs.
+
+Bootstrap the Server:
+```luau copy filename="Script (ServerScriptService/Runtime/MinceLoader)"
+-- == || Mince Startup || == -- 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Mince = require(game.ReplicatedStorage.Modules.Mince) -- Or your path to Mince.
+
+Mince:LoadConfig(ServerScriptService.Runtime.Config) -- Loads all the config in the config folder incl the shared. 
+Mince:LoadConfig(ReplicatedStorage.Runtime.Config.Shared) -- Loads the shared config.
+Mince:LoadModules(ReplicatedStorage.Runtime.Source) -- Loads all modules in the folder, this is your game's "code".
+
+
+Mince:Start() -- Starts calling all setup and post methods.
+```
+
+Bootstrap the Client:
+```luau copy filename="LocalScript (ReplicatedStorage/Runtime/MinceLoader)"
+-- == || Mince Startup || == -- 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Mince = require(game.ReplicatedStorage.Modules.Mince) -- Or your path to Mince.
+
+print("Waiting for server...")
+Mince:WaitUntilSetup("Server") -- Wait until the server is running.
+Mince:LoadConfig(ReplicatedStorage.Runtime.Config) -- Loads all modules in the folder as static configurations.
+Mince:LoadModules(ReplicatedStorage.Runtime.Source) -- Loads all modules in the folder, this is your game's "code".
+
+Mince:Start() -- Starts calling all setup and post methods.
+```
+
+</Steps>
