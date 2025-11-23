@@ -1,0 +1,44 @@
+---
+title: Parallel Addons
+description: An overview of the Parallel Addons for the Mince framework.
+---
+
+import { Cards, Callout } from 'nextra/components'
+
+# Parallel Addons
+
+<Callout type="info">
+  **Understand Parallel Luau:**
+  Before using Mince's parallel addons, it's highly recommended to have a solid understanding of how parallel luau works in Roblox by default. Please review the [official documentation](https://create.roblox.com/docs/scripting/multithreading) first.
+</Callout>
+
+Mince provides powerful addons to simplify parallel programming in Roblox. These tools are designed to handle common use cases for concurrency, from stateless job processing to stateful, persistent entities.
+
+<Cards>
+  <Cards.Card
+  icon={<img src="/img/helmet.png" alt="Chop Icon" width="32" height="32" />}
+    title="Workers"
+    href="/mince/guide/parallel/workers"
+  />
+  <Cards.Card
+  icon={<img src="/img/headset.png" alt="Chop Icon" width="32" height="32" />}
+    title="Agents"
+    href="/mince/guide/parallel/agents"
+  />
+</Cards>
+
+
+## Core Concepts
+
+### Luau VM (Virtual Machine)
+In Roblox, each script runs in its own environment called a Luau Virtual Machine or VM. Think of it as an isolated sandbox. When you use parallel APIs to create an `Actor`, you are creating a new, separate sandbox with its own memory. Code in one VM cannot directly access the memory of another. This is why you can't pass things like Instance references between them; the memory address for an Instance in one VM is meaningless in another.
+
+### Memory Pointers
+A memory pointer is a variable that holds the memory address of another value. In Luau, we don't manage memory directly, but many variables are secretly pointers. For example, when you write `local MyPart = workspace.Part`, the `MyPart` variable doesn't hold the entire Part, just a reference (a pointer) to it. Because Actors run in separate VMs with different memory layouts, these pointers are non-transferable. Trying to send an Instance, a function, or a userdata value to an actor will fail because the pointer would be invalid in the new VM. You must use serializable data types like strings, numbers, booleans, and tables containing only serializable data.
+
+For more information on how Luau manages memory, see this community guide: [A Beginner's Guide to Lua Garbage Collection](https://devforum.roblox.com/t/a-beginners-guide-to-lua-garbage-collection/1756677).
+
+### Threads
+A thread is a sequence of instructions that can be executed by a computer. In traditional programming, a program runs on a single thread. Multithreading is the ability to run multiple threads simultaneously. In Roblox, the main game logic runs on the main thread. When you use parallel Luau, you are creating new threads to run code concurrently with the main thread, allowing you to perform heavy work without lagging the game.
+
+For more information, see this community discussion: [Help with understanding threads and multithreading](https://devforum.roblox.com/t/help-with-understanding-threads-and-multithreading/700243/3).

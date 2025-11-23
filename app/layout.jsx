@@ -28,9 +28,10 @@ export default async function RootLayout({ children }) {
         <Layout
           //banner={banner}
           copyPageButton={false}
+          
           navbar={navbar}
           pageMap={await getPageMap()}
-          docsRepositoryBase="https://github.com/"
+          docsRepositoryBase="https://github.com/intykat/mince"
           footer={footer}
         >
           {children}

@@ -1,0 +1,51 @@
+---
+title: Mince.Agent
+description: API reference for the Mince.Agent addon.
+---
+
+# Mince.Agent
+
+Creates a factory for stateful, persistent entities that each run in a dedicated actor.
+
+```lua
+local MyAgentFactory = Mince.Agent(ModuleScript)
+```
+
+## Agent Factory
+
+The object returned by `Mince.Agent()`.
+
+### `Factory.New(...)`
+Creates a new, unique agent instance. Each agent runs in its own actor.
+
+-   `...`: Any serializable arguments to pass to the agent's `OnNew` method.
+-   **Returns**: An `AgentProxy` object.
+
+```lua
+local MyAgent = MyAgentFactory.New("some_value", 123)
+```
+
+## Agent Proxy
+
+The object returned by `Factory.New()`. This is the object you interact with on the main thread.
+
+### `Proxy:AssignInstance(Identifier, Instance)`
+Gives the agent control over a DataModel instance.
+
+-   `Identifier` (string): The name to reference the instance by inside the agent.
+-   `Instance` (Instance | nil): The instance to assign. If `nil`, the reference is removed.
+
+### `Proxy:Destroy()`
+Terminates the agent's actor and cleans up all associated memory.
+
+### `Proxy.Shared`
+A `SharedTable` that is shared across **all** agents created from the same factory. This is defined in the agent's source module. If not defined, this will be `nil`.
+
+### Custom Methods
+Any function defined in your agent's source module can be called on the proxy. The main thread will yield until the agent returns a result.
+
+```lua
+-- If MyAgent's module has a 'DoSomething' function
+local Result = MyAgent:DoSomething("hello")
+print("Agent returned:", Result)
+```

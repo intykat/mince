@@ -1,0 +1,40 @@
+---
+title: Mince.Worker
+description: API reference for the Mince.Worker addon.
+---
+
+# Mince.Worker
+
+Creates a proxy for a pool of stateless job processors that run in parallel.
+
+```lua
+local MyWorker = Mince.Worker(ModuleScript)
+```
+
+## Worker Proxy
+
+The object returned by `Mince.Worker()`. You interact with this single object to dispatch tasks to the entire pool.
+
+### `Proxy:AwaitAll()`
+Yields the current script until all tasks currently running in the worker pool have completed.
+
+```lua
+-- Fire off some tasks
+task.defer(function() MyWorker:DoHeavyMath() end)
+task.defer(function() MyWorker:DoOtherMath() end)
+
+-- Wait for both to finish
+MyWorker:AwaitAll()
+print("All tasks are done!")
+```
+
+### `Proxy.Shared`
+A `SharedTable` that is created once and shared across **all** actors in the pool. This is defined in the worker's source module. If not defined, this will be `nil`.
+
+### Custom Methods
+Any function defined in your worker's source module can be called on the proxy. The call is added to a queue and automatically distributed to the next available actor in the pool. The main thread will yield until the task is complete and a result is returned.
+
+```lua
+local Result = MyWorker:Compute("some_data")
+print("Worker returned:", Result)
+```

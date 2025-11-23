@@ -25,13 +25,14 @@ To ensure reliable communication, Mince includes a built-in handshake between th
 Mince's architecture is built on a few key concepts:
 
 ### Code Execution
-Mince offers three primary methods for structuring and running your game logic:
+Mince offers five primary methods for structuring and running your game logic:
 - **[Mince Modules](./mince/guide):** Modules that are run and managed by the framework itself. They act as singletons.
 - **[Configuration](./mince/guide/config):** Static configuration tables that are loaded and attached to the framework for easy access.
 - **[Components](./mince/guide/components):** Allow you to cleanly attach behavior and logic to instances using tags.
+- **[Workers](./mince/guide/parallel/workers)** and **[Agents](./mince/guide/parallel/agents):** For running code in parallel.
 
 ### Networking Model
 The framework's networking is built around three distinct patterns for communication:
-- **[Events](./events):** Act similarly to RemoteEvents.
-- **[Functions](./functions):** Act similarly to RemoteFunctions.
-- **[States](./states):** Act similarly to Attributes.
+- **[Events](./mince/guide/networking/events):** Act similarly to RemoteEvents.
+- **[Functions](./mince/guide/networking/functions):** Act similarly to RemoteFunctions.
+- **[States](./mince/guide/networking/states):** Act similarly to Attributes.
