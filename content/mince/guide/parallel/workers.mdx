@@ -36,8 +36,7 @@ local Pathfinder = {
     }
 }
 
--- This function runs inside an actor VM.
--- 'self' is the definition table, NOT a unique state.
+-- This function runs inside an actor VM **in parallel**.
 function Pathfinder:Compute(StartPosition, EndPosition)
     -- Heavy math logic...
     local Distance = (StartPosition - EndPosition).Magnitude
